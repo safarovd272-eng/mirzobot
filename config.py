@@ -1,16 +1,16 @@
-# config.py
-TELEGRAM_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"       # @BotFather dan olinadi
-OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"            # Whisper uchun
-ANTHROPIC_API_KEY = "YOUR_ANTHROPIC_API_KEY"      # Claude uchun
+import os
 
-# Xodimlar ro'yxati: ism → Telegram user_id
+TELEGRAM_TOKEN    = os.environ["TELEGRAM_TOKEN"]
+OPENAI_API_KEY    = os.environ["OPENAI_API_KEY"]
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+
 XODIMLAR = {
-    "Jasur":   123456789,
-    "Malika":  987654321,
-    "Sanjar":  111222333,
+    "Diyor":    int(os.environ.get("XODIM_DIYOR",    "0")),
+    "Diyorjon": int(os.environ.get("XODIM_DIYORJON", "0")),
 }
 
-# Bot egasi (tadbirkor) Telegram ID
-TADBIRKOR_ID = 555666777
+TADBIRKOR_ID = int(os.environ["TADBIRKOR_ID"])
 
-DB_FILE = "mirzo.db"
+DATA_DIR = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH", "/data")
+os.makedirs(DATA_DIR, exist_ok=True)
+DB_FILE = os.path.join(DATA_DIR, "mirzo.db")
