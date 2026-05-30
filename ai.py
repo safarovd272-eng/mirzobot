@@ -1,9 +1,10 @@
 import json
 import httpx
-from config import GROQ_API_KEY, ANTHROPIC_API_KEY, XODIMLAR
+from config import GROQ_API_KEY, XODIMLAR
 
 
 async def ovoz_dan_matn(fayl_yoli: str) -> str:
+    """Groq Whisper — ovozni matnga aylantirish"""
     url = "https://api.groq.com/openai/v1/audio/transcriptions"
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
 
@@ -23,55 +24,54 @@ async def ovoz_dan_matn(fayl_yoli: str) -> str:
 TIZIM_XABARI = """Sen o'zbek tilida ishlaydigan aqlli kotibsan.
 Tadbirkor uchrashuv yoki topshiriqlar haqida gapiradi.
 Sening vazifang: gapdan kim uchun qanday vazifa va deadline bor ekanini aniqlab,
-faqat JSON formatida qaytarish.
+FAQAT JSON formatida qaytarish. Boshqa hech narsa yozma.
 
-Xodimlar ro'yxati: {xodimlar}
+Xodimlar: {xodimlar}
+Bugun: {bugun}
 
-Qoidalar:
-- Faqat JSON qaytaradi, boshqa hech narsa yozma
-- Agar xodim nomi aniq aytilmasa, "Umumiy" deb yoz
-- Deadline aniq aytilmasa, 3 kun keyingi sanani yoz (YYYY-MM-DD formatida)
-- Bugungi sana: {bugun}
+Agar deadline aytilmasa, 3 kun keyingi sana.
+Agar xodim aytilmasa, "Umumiy" yoz.
 
-Qaytariladigan format:
-{{
-  "xulosa": "Uchrashuv haqida 1-2 gaplik xulosa",
-  "vazifalar": [
-    {{
-      "xodim": "Xodim ismi",
-      "vazifa": "Nima qilish kerak — aniq va qisqa",
-      "deadline": "YYYY-MM-DD"
-    }}
-  ]
-}}"""
+JSON format:
+{{"xulosa":"...","vazifalar":[{{"xodim":"...","vazifa":"...","deadline":"YYYY-MM-DD"}}]}}"""
 
 
 async def matndan_vazifalar(matn: str) -> dict:
     from datetime import datetime
     bugun = datetime.now().strftime("%Y-%m-%d")
     xodimlar_list = ", ".join(XODIMLAR.keys())
-    tizim = TIZIM_XABARI.format(xodimlar=xodimlar_list, bugun=bugun)
 
     payload = {
-        "model": "claude-haiku-4-5-20251001",
+        "model": "llama-3.3-70b-versatile",
+        "messages": [
+            {
+                "role": "system",
+                "content": TIZIM_XABARI.format(xodimlar=xodimlar_list, bugun=bugun)
+            },
+            {
+                "role": "user",
+                "content": matn
+            }
+        ],
+        "temperature": 0.1,
         "max_tokens": 1000,
-        "system": tizim,
-        "messages": [{"role": "user", "content": matn}]
     }
+
     headers = {
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json",
     }
+
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
-            "https://api.anthropic.com/v1/messages",
-            json=payload, headers=headers
+            "https://api.groq.com/openai/v1/chat/completions",
+            json=payload,
+            headers=headers
         )
         resp.raise_for_status()
         data = resp.json()
 
-    javob = data["content"][0]["text"].strip()
+    javob = data["choices"][0]["message"]["content"].strip()
     if javob.startswith("```"):
         javob = javob.split("```")[1]
         if javob.startswith("json"):
