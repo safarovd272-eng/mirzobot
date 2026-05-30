@@ -1,8 +1,7 @@
 import os
 
-TELEGRAM_TOKEN    = os.environ["TELEGRAM_TOKEN"]
-GROQ_API_KEY      = os.environ["GROQ_API_KEY"]
-ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
+TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
+GROQ_API_KEY   = os.environ["GROQ_API_KEY"]
 
 XODIMLAR = {
     "Diyor":    int(os.environ.get("XODIM_DIYOR",    "0")),
